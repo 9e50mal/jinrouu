@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#11131c">
+<title>月影の人狼卓 - 放置ノベルゲーム</title>
+<style>
+:root{
+  --bg:#10121b;--panel:#1a1d29;--panel2:#202433;--line:rgba(218,211,190,.15);
+  --text:#eee9dc;--muted:#aaa99f;--gold:#d6b979;--gold2:#f0d99f;
+  --red:#d77b7b;--blue:#8eb8d8;--green:#9cbea4;--purple:#b7a1d5;
+  --shadow:0 18px 48px rgba(0,0,0,.27);
+}
+*{box-sizing:border-box}
+html{min-width:320px;background:var(--bg)}
+body{margin:0;color:var(--text);font-family:ui-serif,"Yu Mincho","Hiragino Mincho ProN",serif;background:
+  radial-gradient(ellipse at 18% 0%,rgba(86,78,117,.23),transparent 38%),
+  radial-gradient(ellipse at 95% 30%,rgba(99,74,64,.14),transparent 34%),
+  linear-gradient(180deg,#151724 0%,#10121b 70%,#0c0e15 100%);min-height:100vh}
+button{font:inherit;color:inherit;cursor:pointer}
+.shell{width:min(1420px,calc(100% - 36px));margin:0 auto;padding:30px 0 48px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}
+.eyebrow{font:700 10px/1.4 system-ui,sans-serif;letter-spacing:.27em;color:var(--gold);text-transform:uppercase}
+h1{font-size:clamp(27px,4vw,42px);font-weight:500;letter-spacing:.12em;margin:7px 0 6px}
+.subtitle{font-size:13px;color:var(--muted);letter-spacing:.06em}
+.header-mark{width:76px;height:76px;border:1px solid rgba(214,185,121,.32);border-radius:50%;display:grid;place-items:center;color:var(--gold);font-size:29px;position:relative;flex:none}
+.header-mark:before,.header-mark:after{content:"";position:absolute;border:1px solid rgba(214,185,121,.15);border-radius:50%;inset:7px}
+.header-mark:after{inset:-6px;border-style:dashed;opacity:.5}
+.topline{display:grid;grid-template-columns:1fr repeat(3,minmax(105px,150px));gap:10px;margin-bottom:13px}
+.match-name,.metric{background:rgba(27,30,43,.84);border:1px solid var(--line);border-radius:12px;padding:12px 16px;min-height:63px}
+.match-name{display:flex;flex-direction:column;justify-content:center;gap:4px}
+.match-name strong{font-size:14px;font-weight:500;letter-spacing:.08em}
+.match-name small,.metric small{font:10px system-ui,sans-serif;color:var(--muted);letter-spacing:.12em}
+.metric{display:flex;flex-direction:column;justify-content:center;gap:3px}
+.metric strong{font:600 20px/1.1 system-ui,sans-serif;color:var(--gold2);font-variant-numeric:tabular-nums}
+.toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.control{border:1px solid var(--line);border-radius:9px;padding:9px 13px;background:#202434;color:var(--text);font:600 11px system-ui,sans-serif;letter-spacing:.06em;transition:.2s}
+.control:hover{border-color:rgba(214,185,121,.65);background:#282d40}
+.control.primary{background:linear-gradient(135deg,#a9894f,#d0b477);color:#181714;border-color:transparent;padding-inline:17px}
+.control.primary:hover{filter:brightness(1.08)}
+.control.active{border-color:var(--gold);color:var(--gold2);background:rgba(214,185,121,.1)}
+.control:disabled{opacity:.35;cursor:not-allowed}
+.toolbar-spacer{flex:1}
+.control-note{font:10px system-ui,sans-serif;color:var(--muted);margin-right:4px}
+.layout{display:grid;grid-template-columns:minmax(0,1.72fr) minmax(320px,.92fr);gap:16px;align-items:start}
+.panel{background:linear-gradient(145deg,rgba(29,33,47,.96),rgba(22,25,36,.98));border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--line);gap:12px}
+.panel-title{font-size:13px;letter-spacing:.12em;font-weight:600}
+.panel-kicker{font:9px system-ui,sans-serif;letter-spacing:.16em;color:var(--muted)}
+.stage{min-height:610px;display:flex;flex-direction:column}
+.day-banner{padding:17px 19px 14px;background:linear-gradient(90deg,rgba(214,185,121,.09),transparent 80%);border-bottom:1px solid var(--line)}
+.phase-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.phase-name{font-size:17px;letter-spacing:.14em;color:var(--gold2)}
+.turn-count{font:11px system-ui,sans-serif;color:var(--muted)}
+.progress{display:flex;gap:5px;margin-top:13px}
+.progress span{height:3px;flex:1;border-radius:8px;background:rgba(255,255,255,.09)}
+.progress span.done{background:var(--gold)}
+.progress span.current{background:linear-gradient(90deg,var(--gold),rgba(214,185,121,.3));box-shadow:0 0 9px rgba(214,185,121,.35)}
+.log-area{padding:17px 19px 22px;height:476px;overflow-y:auto;scroll-behavior:smooth}
+.log-area::-webkit-scrollbar,.heaven-content::-webkit-scrollbar{width:6px}
+.log-area::-webkit-scrollbar-thumb,.heaven-content::-webkit-scrollbar-thumb{background:rgba(214,185,121,.25);border-radius:8px}
+.log-entry{position:relative;padding:8px 0 9px 13px;border-left:1px solid rgba(214,185,121,.22);margin-left:5px;animation:appear .28s ease-out}
+.log-entry:before{content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:#9d8a64;left:-3px;top:15px}
+.log-entry.system{border-left-color:rgba(142,184,216,.25)}
+.log-entry.system:before{background:#8eb8d8}
+.log-entry.vote:before{background:#cfad70}
+.log-entry.night:before{background:#a58fc4}
+.log-meta{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.log-speaker{font-size:12px;color:var(--gold2);font-weight:600;letter-spacing:.04em}
+.log-tag{font:9px system-ui,sans-serif;color:var(--muted);letter-spacing:.12em;border:1px solid rgba(255,255,255,.1);padding:2px 5px;border-radius:4px}
+.log-text{font-size:13px;line-height:1.8;color:#e7e2d7;white-space:pre-wrap;overflow-wrap:anywhere}
+.log-entry.system .log-speaker{color:#9cc2df}
+.log-entry.system .log-text{color:#bfcbd1;font-size:12px}
+.log-entry.night .log-speaker{color:#c3b1e0}
+.log-entry.vote .log-speaker{color:#e3c78f}
+.log-empty{height:100%;display:grid;place-items:center;text-align:center;color:var(--muted);padding:30px}
+.log-empty strong{display:block;color:var(--gold2);font-size:19px;font-weight:500;letter-spacing:.12em;margin-bottom:8px}
+.log-empty p{font-size:12px;line-height:1.8;margin:0}
+.side{display:flex;flex-direction:column;gap:15px}
+.roster-panel .panel-head{padding-bottom:13px}
+.roster-list{padding:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.player-card{position:relative;border:1px solid rgba(255,255,255,.085);background:rgba(255,255,255,.025);border-radius:11px;padding:9px 9px 8px;min-width:0;transition:.2s}
+.player-card.dead{opacity:.42;filter:grayscale(.75)}
+.player-card.speaking{border-color:rgba(214,185,121,.75);background:rgba(214,185,121,.09);box-shadow:0 0 0 1px rgba(214,185,121,.08)}
+.player-top{display:flex;align-items:center;gap:8px;min-width:0}
+.avatar{width:37px;height:37px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:17px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.16);background:linear-gradient(145deg,#5c667d,#293044)}
+.avatar.miva{background:linear-gradient(135deg,#ef9bb7 0 32%,#f1eee9 33% 66%,#73c9dc 67%);color:#39404b;font-size:18px}
+.avatar.miva:before,.avatar.miva:after{content:"";position:absolute;top:-1px;width:10px;height:17px;background:#f4f0e8;clip-path:polygon(50% 0,100% 100%,0 100%);z-index:2}
+.avatar.miva:before{left:3px;transform:rotate(-15deg)}.avatar.miva:after{right:3px;transform:rotate(15deg)}
+.avatar.miva span{position:relative;z-index:3;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2))}
+.avatar.tesuke{background:radial-gradient(circle at 50% 57%,#020307 0 25%,#353443 27% 46%,#e8e2d4 48% 100%);color:#fff}
+.avatar.tesuke span{width:20px;height:23px;border-radius:50% 50% 42% 42%;background:#030307;box-shadow:0 0 12px #000;display:block}
+.avatar.mob-1{background:linear-gradient(135deg,#b28265,#513f43)}.avatar.mob-2{background:linear-gradient(135deg,#83a7a0,#354d58)}.avatar.mob-3{background:linear-gradient(135deg,#c5a66a,#62503b)}.avatar.mob-4{background:linear-gradient(135deg,#9384b9,#4a4562)}
+.player-id{min-width:0;flex:1}
+.player-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.player-sub{font:9px system-ui,sans-serif;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.role-pill{display:inline-flex;align-items:center;gap:4px;margin-top:7px;font:9px system-ui,sans-serif;color:#a8a8a8;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3px 7px}
+.role-pill.revealed{color:var(--gold2);border-color:rgba(214,185,121,.3)}
+.card-bottom{display:flex;align-items:center;gap:6px;margin-top:8px;font:9px system-ui,sans-serif;color:var(--muted)}
+.alert-track{height:3px;flex:1;background:rgba(255,255,255,.08);border-radius:5px;overflow:hidden}
+.alert-fill{height:100%;background:linear-gradient(90deg,#7d9e9b,#d0ae70);border-radius:5px}
+details.stats{margin-top:7px;border-top:1px solid rgba(255,255,255,.07);padding-top:5px}
+details.stats summary{font:9px system-ui,sans-serif;color:#888d98;cursor:pointer;list-style:none}
+details.stats summary::-webkit-details-marker{display:none}
+.stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:5px 8px;padding:7px 0 2px}
+.stat-line{font:8px system-ui,sans-serif;color:var(--muted)}
+.stat-line div{display:flex;justify-content:space-between;gap:3px;margin-bottom:3px}
+.stat-line b{font-weight:500;color:#d8d0c0}
+.stat-track{height:3px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}
+.stat-track i{display:block;height:100%;background:#978c72;border-radius:5px}
+.heaven-panel{border-color:rgba(155,139,184,.22)}
+.heaven-panel .panel-head{background:rgba(155,139,184,.055)}
+.heaven-content{height:162px;overflow-y:auto;padding:11px 14px}
+.heaven-empty{font-size:11px;color:#8f8c9a;line-height:1.8}
+.heaven-line{font-size:11px;line-height:1.75;color:#c9c3d4;margin:0 0 8px;padding-left:8px;border-left:1px solid rgba(183,161,213,.34)}
+.heaven-line b{color:#d7c7ef;font-weight:600;margin-right:5px}
+.footer-note{font:10px/1.7 system-ui,sans-serif;color:#777b87;text-align:center;margin-top:19px;letter-spacing:.03em}
+.result-strip{display:none;padding:13px 18px;background:linear-gradient(90deg,rgba(156,190,164,.12),transparent);border-bottom:1px solid var(--line)}
+.result-strip.show{display:block}
+.result-strip strong{font-size:15px;color:var(--green);font-weight:600;letter-spacing:.1em}
+.result-strip.wolf strong{color:var(--red)}
+.result-strip p{font-size:11px;color:var(--muted);margin:4px 0 0;line-height:1.6}
+@keyframes appear{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:920px){.layout{grid-template-columns:1fr}.stage{min-height:530px}.log-area{height:405px}.side{display:grid;grid-template-columns:1fr 1fr;align-items:start}.roster-panel{grid-row:span 2}.heaven-content{height:200px}}
+@media(max-width:620px){.shell{width:min(100% - 20px,1420px);padding-top:20px}header{align-items:center}.header-mark{width:52px;height:52px;font-size:20px}.header-mark:before{inset:5px}.header-mark:after{inset:-4px}.topline{grid-template-columns:repeat(3,1fr)}.match-name{grid-column:1/-1;min-height:52px}.metric{min-height:57px;padding:9px 11px}.metric strong{font-size:17px}.layout{gap:12px}.side{display:flex}.stage{min-height:500px}.log-area{height:375px;padding:13px}.day-banner{padding:14px}.roster-list{grid-template-columns:1fr 1fr}.panel-head{padding:13px 14px}.toolbar{gap:6px}.control{padding:8px 10px}.toolbar-spacer{display:none}.control-note{margin-left:auto}.footer-note{padding:0 10px}}
+
+/* Mobile / iPhone refinements */
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+body{ min-height:100svh; padding-bottom:env(safe-area-inset-bottom); }
+button{ -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+@media(max-width:620px){
+  .shell{width:calc(100% - 20px);padding: max(14px,env(safe-area-inset-top)) 0 calc(24px + env(safe-area-inset-bottom));}
+  header{gap:10px;margin-bottom:16px}
+  h1{font-size:clamp(23px,7vw,31px);letter-spacing:.08em}
+  .subtitle{font-size:11px;line-height:1.65}
+  .topline{gap:6px;margin-bottom:10px}
+  .metric{padding:8px 9px;min-width:0}
+  .metric small{font-size:8px;letter-spacing:.06em}
+  .metric strong{font-size:16px}
+  .toolbar{gap:7px;margin-bottom:12px}
+  .control{min-height:40px;padding:9px 10px;font-size:10px}
+  .control.primary{padding-inline:12px}
+  .control-note{font-size:9px}
+  .stage{min-height:0}
+  .log-area{height:min(48svh,430px);min-height:260px;padding:12px 13px 18px;-webkit-overflow-scrolling:touch}
+  .log-text{font-size:13px;line-height:1.85}
+  .side{gap:12px}
+  .roster-list{gap:7px;padding:8px}
+  .player-card{padding:8px 7px}
+  .avatar{width:33px;height:33px}
+  .player-name{font-size:11px}
+  .player-sub{font-size:8px}
+  .heaven-content{height:170px;-webkit-overflow-scrolling:touch}
+}
+@media(max-width:380px){
+  .shell{width:calc(100% - 14px)}
+  .header-mark{width:44px;height:44px}
+  .control{padding-inline:8px;font-size:9px}
+  .roster-list{grid-template-columns:1fr}
+  .player-card{padding:9px}
+}
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div>
+      <div class="eyebrow">THE MOONLIT TABLE · AUTO SPECTATE</div>
+      <h1>月影の人狼卓</h1>
+      <div class="subtitle">種族の垣根を越えた、九人の夜明けと疑心暗鬼。</div>
+    </div>
+    <div class="header-mark" aria-hidden="true">✦</div>
+  </header>
+
+  <section class="topline" aria-label="ゲーム状況">
+    <div class="match-name"><small>NOW PLAYING</small><strong id="matchTitle">観戦準備中</strong></div>
+    <div class="metric"><small>DAY / ROUND</small><strong id="dayMetric">—</strong></div>
+    <div class="metric"><small>ALIVE</small><strong id="aliveMetric">— / 9</strong></div>
+    <div class="metric"><small>PHASE</small><strong id="phaseMetric">待機</strong></div>
+  </section>
+
+  <nav class="toolbar" aria-label="再生操作">
+    <button class="control primary" id="startBtn">▶ ゲーム開始</button>
+    <button class="control" id="pauseBtn" disabled>Ⅱ 一時停止</button>
+    <span class="control-note">再生速度</span>
+    <button class="control speed active" data-speed="1" disabled>×1</button>
+    <button class="control speed" data-speed="2" disabled>×2</button>
+    <button class="control speed" data-speed="3" disabled>×3</button>
+    <span class="toolbar-spacer"></span>
+    <button class="control active" id="loopBtn" disabled>↻ 連続観戦 ON</button>
+    <button class="control" id="restartBtn" disabled>新しい卓を開く</button>
+  </nav>
+
+  <main class="layout">
+    <section class="panel stage" aria-label="ゲームログ">
+      <div class="panel-head">
+        <div><div class="panel-title">議論の記録</div><div class="panel-kicker">THE CHRONICLE OF NINE</div></div>
+        <div class="panel-kicker" id="logCount">NO. 000</div>
+      </div>
+      <div class="result-strip" id="resultStrip"><strong id="resultTitle"></strong><p id="resultText"></p></div>
+      <div class="day-banner">
+        <div class="phase-row"><div class="phase-name" id="phaseName">卓はまだ開かれていない</div><div class="turn-count" id="turnCount">—</div></div>
+        <div class="progress" id="progress"><span></span><span></span><span></span><span></span><span></span></div>
+      </div>
+      <div class="log-area" id="logArea">
+        <div class="log-empty"><div><strong>月影の卓へようこそ</strong><p>九人の参加者が集まると、物語が動き始めます。<br>ゲーム開始を押して、彼らの議論を見届けてください。</p></div></div>
+      </div>
+    </section>
+
+    <aside class="side">
+      <section class="panel roster-panel">
+        <div class="panel-head"><div><div class="panel-title">参加者</div><div class="panel-kicker">THE NINE PLAYERS</div></div><div class="panel-kicker" id="rosterCount">— ALIVE</div></div>
+        <div class="roster-list" id="rosterList">
+          <div class="heaven-empty" style="grid-column:1/-1;padding:12px">ゲーム開始後、参加者が表示されます。</div>
+        </div>
+      </section>
+      <section class="panel heaven-panel">
+        <div class="panel-head"><div><div class="panel-title">天国部屋</div><div class="panel-kicker">AFTERLIFE CHAT</div></div><div class="panel-kicker" id="heavenCount">0 SOULS</div></div>
+        <div class="heaven-content" id="heavenContent"><div class="heaven-empty">脱落者たちの本音は、こちらに流れ着きます。</div></div>
+      </section>
+    </aside>
+  </main>
+  <div class="footer-note">このゲームは観戦専用です。役職・投票・夜の行動は、各キャラクターの能力値と状況に応じて自動決定されます。<br>配役は脱落時またはゲーム終了時に公開されます。</div>
+</div>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const ROLE = {CITIZEN:'市民',SEER:'占い師',GUARD:'狩人',WOLF:'人狼',MAD:'狂人'};
+const TEAM = {CITIZEN:'town',SEER:'town',GUARD:'town',WOLF:'wolf',MAD:'wolf'};
+const ROLE_SET = [ROLE.CITIZEN,ROLE.CITIZEN,ROLE.CITIZEN,ROLE.CITIZEN,ROLE.SEER,ROLE.GUARD,ROLE.WOLF,ROLE.WOLF,ROLE.MAD];
+const STAT_LABELS = {charisma:'カリスマ',stealth:'ステルス',acting:'演技力',cute:'かわいげ',intuition:'直感',logic:'ロジック'};
+const SPECIES = [
+  {name:'人間',icon:'🧑',voice:['そうですね','私はこう思います','少し気になります']},
+  {name:'猫獣人',icon:'🐈',voice:['そうにゃ','なんだか怪しいにゃ','落ち着いて考えるにゃ']},
+  {name:'犬獣人',icon:'🐕',voice:['そうだと思うワン','気になるワン','まだ決めつけたくないワン']},
+  {name:'エルフ',icon:'🧝',voice:['森の気配が告げています','慎重に見極めましょう','少々、違和感がありますね']},
+  {name:'ドワーフ',icon:'🧔',voice:['わしはそうは思わん','まだ早いんじゃないか','妙な話じゃのう']},
+  {name:'天使',icon:'😇',voice:['どうか冷静に','真実は一つのはずです','その言葉を信じたいです']},
+  {name:'悪魔',icon:'😈',voice:['くくっ、面白くなってきた','疑うのは自由だろう？','その反応、嫌いじゃない']},
+  {name:'竜人',icon:'🐉',voice:['焦る必要はない','我にはそう見える','言葉を選んだ方がいい']},
+  {name:'水棲族',icon:'🫧',voice:['水面が揺れていますね','その考えも分かります','少し流れが不自然です']}
+];
+const FIRST = ['アシュ','リオ','ノエ','カイ','ユノ','セラ','ハル','ネム','ラウ','フィン','エマ','ジン','トワ','ルカ','ミナ','オル','シオン','レム','ナギ','イリス','クロ','ベル','ソラ','ミオ','アル'];
+const LAST = ['・ヴェイル','・ノクス','・リード','・フェル','・アステル','・グレイ','・ルーン','・ミスト','・ロウ','・カナン','・オルタ',''];
+let game = null;
+let timer = null;
+let nextAction = null;
+let paused = false;
+let speed = 1;
+let loopOn = true;
+let entryNumber = 0;
+
+const rand = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+const pick = (arr) => arr[Math.floor(Math.random()*arr.length)];
+const clamp = (n,min=0,max=100) => Math.max(min,Math.min(max,n));
+const shuffle = (arr) => { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const alive = () => game ? game.players.filter(p=>p.alive) : [];
+const livingByRole = (role) => alive().filter(p=>p.role===role);
+const playerById = (id) => game.players.find(p=>p.id===id);
+const roleColor = (role) => role===ROLE.WOLF?'#d88b8b':role===ROLE.MAD?'#c4a6d9':role===ROLE.SEER?'#9fc1e4':role===ROLE.GUARD?'#a6c5a7':'#d5cdbb';
+
+function makeStats(isSpecial,name){
+  if(name==='ミヴァ') return {charisma:rand(18,34),stealth:rand(18,32),acting:rand(55,73),cute:rand(38,58),intuition:rand(91,99),logic:rand(90,99)};
+  if(name==='テスケ') return {charisma:rand(91,99),stealth:rand(3,13),acting:rand(69,88),cute:rand(62,82),intuition:rand(91,99),logic:rand(68,83)};
+  return {charisma:rand(18,92),stealth:rand(12,94),acting:rand(15,95),cute:rand(15,95),intuition:rand(15,95),logic:rand(15,95)};
+}
+function mobName(used){let name;do{name=pick(FIRST)+pick(LAST);}while(used.has(name));used.add(name);return name;}
+function makePlayer(id,name,species,portrait,special){
+  return {id,name,species,portrait,special:!!special,stats:makeStats(special,name),role:null,alive:true,alert:rand(0,8),suspicion:rand(3,14),mood:rand(-15,15),affinity:{},claims:[],reports:[],seerKnowledge:{},sharedKnowledge:[],lastProtected:null,hasActed:false};
+}
+function createRoster(){
+  const players=[
+    makePlayer('miva','ミヴァ','種族不詳','☾',true),
+    makePlayer('tesuke','テスケ','種族不詳','',true)
+  ];
+  const used=new Set(['ミヴァ','テスケ']);
+  for(let i=0;i<7;i++){
+    const sp=pick(SPECIES); const name=mobName(used);
+    players.push(makePlayer('mob'+i,name,sp.name,sp.icon,false));
+  }
+  shuffle(players).forEach((p,i)=>p.seat=i+1);
+  const roles=shuffle(ROLE_SET);
+  players.forEach((p,i)=>p.role=roles[i]);
+  players.forEach(p=>players.forEach(q=>{if(p!==q)p.affinity[q.id]=rand(-18,18);}));
+  return players;
+}
+function startMatch(){
+  if(timer)clearTimeout(timer);timer=null;nextAction=null;paused=false;entryNumber=0;
+  game={players:createRoster(),day:0,turn:0,phase:'準備',dead:[],heaven:[],publicReports:[],nightTarget:null,guardTarget:null,lastGuardTarget:null,history:[],winner:null,gameNo:(game?.gameNo||0)+1};
+  $('matchTitle').textContent='第 '+game.gameNo+' 回 月影の卓';
+  $('resultStrip').className='result-strip';
+  $('logArea').innerHTML='';
+  $('heavenContent').innerHTML='<div class="heaven-empty">まだ誰もこちらには来ていません。</div>';
+  renderRoster();renderMetrics();setPhase('開幕前',0,'参加者が席に着いている');
+  addLog('system','月影の語り部','九人の参加者が、古い石造りの広間に集まった。窓の外では、青白い月が雲の向こうに浮かんでいる。');
+  addLog('system','月影の語り部','今夜の配役は伏せられた。議論は朝から始まり、五つの発言のあとに投票が行われる。');
+  addLog('system','月影の語り部','――それでは、ゲームを始めよう。');
+  schedule(beginDay,1400);
+  $('startBtn').textContent='↻ ゲームをリスタート';
+  $('pauseBtn').disabled=false;$('loopBtn').disabled=false;$('restartBtn').disabled=false;
+  document.querySelectorAll('.speed').forEach(b=>b.disabled=false);
+  $('pauseBtn').textContent='Ⅱ 一時停止';$('pauseBtn').classList.remove('active');
+}
+function schedule(fn,ms=1200){
+  if(timer)clearTimeout(timer);nextAction=fn;
+  if(paused)return;
+  timer=setTimeout(()=>{timer=null;if(paused)return;const f=nextAction;nextAction=null;if(f)f();},ms/speed);
+}
+function togglePause(){
+  if(!game)return;
+  paused=!paused;
+  $('pauseBtn').textContent=paused?'▶ 再開':'Ⅱ 一時停止';
+  $('pauseBtn').classList.toggle('active',paused);
+  if(paused){if(timer)clearTimeout(timer);timer=null;}
+  else if(nextAction)schedule(nextAction,400);
+}
+function setSpeed(value){speed=value;document.querySelectorAll('.speed').forEach(b=>b.classList.toggle('active',Number(b.dataset.speed)===speed));if(timer&&nextAction){clearTimeout(timer);timer=null;schedule(nextAction,350);}}
+function setPhase(name,turn=0,sub=''){
+  $('phaseName').textContent=name;$('phaseMetric').textContent=name.replace('パート','');
+  $('turnCount').textContent=sub|| (turn?`発言 ${turn} / 5`:'');
+  const bars=$('progress').children;
+  for(let i=0;i<bars.length;i++){bars[i].className=i<turn?'done':i===turn-1&&turn>0?'current':'';}
+}
+function renderMetrics(){
+  if(!game)return;
+  $('dayMetric').textContent=game.day?`D${game.day}`:'—';
+  $('aliveMetric').textContent=`${alive().length} / 9`;
+  $('rosterCount').textContent=`${alive().length} ALIVE`;
+  $('logCount').textContent='NO. '+String(entryNumber).padStart(3,'0');
+}
+function addLog(type,speaker,text,tag=''){
+  if(!game)return;
+  entryNumber++;
+  const area=$('logArea');
+  const empty=area.querySelector('.log-empty');if(empty)empty.remove();
+  const el=document.createElement('div');el.className='log-entry '+type;
+  const meta=document.createElement('div');meta.className='log-meta';
+  const who=document.createElement('span');who.className='log-speaker';who.textContent=speaker;
+  meta.appendChild(who);
+  if(tag){const badge=document.createElement('span');badge.className='log-tag';badge.textContent=tag;meta.appendChild(badge);}
+  const body=document.createElement('div');body.className='log-text';body.textContent=text;
+  el.append(meta,body);area.appendChild(el);area.scrollTop=area.scrollHeight;
+  $('logCount').textContent='NO. '+String(entryNumber).padStart(3,'0');
+}
+function renderRoster(speakingId=null){
+  if(!game)return;
+  const root=$('rosterList');root.innerHTML='';
+  game.players.forEach(p=>{
+    const card=document.createElement('article');card.className='player-card'+(!p.alive?' dead':'')+(p.id===speakingId?' speaking':'');
+    const top=document.createElement('div');top.className='player-top';
+    const avatar=document.createElement('div');avatar.className='avatar '+(p.id==='miva'?'miva':p.id==='tesuke'?'tesuke':'mob-'+(Math.abs(hash(p.id))%4+1));
+    if(p.id==='tesuke'){const voidFace=document.createElement('span');avatar.appendChild(voidFace);}else{const face=document.createElement('span');face.textContent=p.portrait;avatar.appendChild(face);}
+    const info=document.createElement('div');info.className='player-id';
+    const name=document.createElement('div');name.className='player-name';name.textContent=p.name;
+    const sub=document.createElement('div');sub.className='player-sub';sub.textContent=p.species+(p.alive?'':' · 脱落');
+    info.append(name,sub);top.append(avatar,info);card.appendChild(top);
+    const role=document.createElement('div');role.className='role-pill'+(p.revealed?' revealed':'');
+    role.textContent=p.revealed?`◆ ${p.role}`:'◇ 役職不明';
+    if(p.revealed)role.style.color=roleColor(p.role);
+    card.appendChild(role);
+    const bottom=document.createElement('div');bottom.className='card-bottom';
+    const alertText=document.createElement('span');alertText.textContent=`警戒 ${p.alert}`;
+    const track=document.createElement('div');track.className='alert-track';const fill=document.createElement('div');fill.className='alert-fill';fill.style.width=clamp(p.alert,0,100)+'%';track.appendChild(fill);
+    bottom.append(alertText,track);card.appendChild(bottom);
+    const details=document.createElement('details');details.className='stats';
+    const summary=document.createElement('summary');summary.textContent='能力値を見る';details.appendChild(summary);
+    const grid=document.createElement('div');grid.className='stat-grid';
+    Object.entries(p.stats).forEach(([key,val])=>{const line=document.createElement('div');line.className='stat-line';const label=document.createElement('div');const l=document.createElement('span');l.textContent=STAT_LABELS[key];const v=document.createElement('b');v.textContent=val;label.append(l,v);const bar=document.createElement('div');bar.className='stat-track';const i=document.createElement('i');i.style.width=val+'%';bar.appendChild(i);line.append(label,bar);grid.appendChild(line);});
+    details.appendChild(grid);card.appendChild(details);root.appendChild(card);
+  });
+  renderMetrics();
+}
+function hash(str){let h=0;for(let i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))|0;return h;}
+function changeSuspicion(target,delta){if(target&&target.alive)target.suspicion=clamp(target.suspicion+delta,0,100);}
+function affinity(a,b,delta){if(a&&b&&a!==b)a.affinity[b.id]=clamp((a.affinity[b.id]||0)+delta,-100,100);}
+function changeAlert(p,delta){p.alert=clamp(p.alert+delta,0,100);}
+function chooseTarget(actor,mode='talk'){
+  const candidates=alive().filter(p=>p!==actor);
+  if(!candidates.length)return null;
+  const weights=candidates.map(p=>{
+    let w=1;
+    if(mode==='accuse')w=12+p.suspicion*.55+p.alert*.08+(100-p.stats.cute)*.12+(100-(actor.affinity[p.id]||0))*.04;
+    else if(mode==='defend')w=10+(100-p.suspicion)*.45+(actor.affinity[p.id]||0)*.15;
+    else if(mode==='threat')w=10+p.stats.charisma*.23+p.stats.logic*.2+p.stats.intuition*.16+(100-p.stats.stealth)*.22;
+    else if(mode==='seer')w=8+p.suspicion*.35+rand(0,35);
+    else w=10+rand(0,30);
+    if(p.role===ROLE.WOLF&&actor.role===ROLE.WOLF&&mode!=='seer')w*=.08;
+    if(p.role===ROLE.WOLF&&actor.role!==ROLE.WOLF&&actor.role!==ROLE.MAD)w*=.85;
+    return Math.max(.2,w);
+  });
+  return weightedPick(candidates,weights);
+}
+function weightedPick(items,weights){const sum=weights.reduce((a,b)=>a+b,0);let n=Math.random()*sum;for(let i=0;i<items.length;i++){n-=weights[i];if(n<=0)return items[i];}return items[items.length-1];}
+function chooseAction(actor){
+  const turn=game.turn;
+  const known=actor.seerKnowledge;
+  const unshared=Object.keys(known).filter(id=>!actor.sharedKnowledge.includes(id));
+  if(actor.role===ROLE.SEER&&unshared.length&&Math.random()<(.45+actor.stats.logic/220))return {type:'share',target:playerById(unshared[0])};
+  if(actor.role===ROLE.SEER&&turn>=2&&Math.random()<.3)return {type:'claim',claim:ROLE.SEER};
+  if((actor.role===ROLE.WOLF||actor.role===ROLE.MAD)&&!actor.claims.length&&turn>=1&&Math.random()<(.07+actor.stats.acting/700))return {type:'claim',claim:pick([ROLE.SEER,ROLE.CITIZEN,ROLE.GUARD])};
+  if(actor.role===ROLE.GUARD&&!actor.claims.length&&turn>=3&&actor.suspicion>35&&Math.random()<.2)return {type:'claim',claim:ROLE.GUARD};
+  if(actor.suspicion>58&&Math.random()<.34)return {type:'defendSelf'};
+  if(actor.mood < -42 && Math.random()<.22)return {type:'defendSelf'};
+  const logic=actor.stats.logic/100,intuition=actor.stats.intuition/100;
+  const agitation=actor.mood < -24 ? Math.min(18,Math.abs(actor.mood)*.18) : 0;
+  const weights=[
+    {type:'suspect',w:22+logic*17+intuition*9+agitation},
+    {type:'defend',w:10+actor.stats.cute*.09},
+    {type:'demand',w:10+logic*10+(turn===1?9:0)},
+    {type:'chat',w:17+actor.stats.cute*.08},
+    {type:'claim',w:actor.role===ROLE.CITIZEN?2:5},
+    {type:'support',w:11+actor.stats.charisma*.07}
+  ];
+  if(actor.role===ROLE.WOLF){weights.find(x=>x.type==='suspect').w+=15;weights.find(x=>x.type==='chat').w+=6;}
+  if(actor.role===ROLE.MAD){weights.find(x=>x.type==='demand').w+=12;weights.find(x=>x.type==='suspect').w+=10;}
+  if(turn===4)weights.find(x=>x.type==='suspect').w+=14;
+  const action=weightedPick(weights,weights.map(x=>x.w)).type;
+  if(action==='suspect')return {type:action,target:chooseTarget(actor,'accuse')};
+  if(action==='defend')return {type:action,target:chooseTarget(actor,'defend')};
+  if(action==='support')return {type:action,target:chooseTarget(actor,'defend')};
+  if(action==='claim')return {type:action,claim:actor.role===ROLE.SEER?ROLE.SEER:actor.role===ROLE.GUARD?ROLE.GUARD:ROLE.CITIZEN};
+  return {type:action,target:chooseTarget(actor,'talk')};
+}
+function namedLine(p,type,target){
+  const n=target?target.name:'みんな';
+  if(p.id==='miva'){
+    const lines={
+      suspect:[`んー、${n}がちょっと怪しくねーの？`,`${n}の発言、さっきと噛み合ってなくね？`,`オレは${n}を見とくわ。なんか引っかかるっつーことね。`],
+      defend:[`${n}はまだ疑う段階じゃねーだろ。`,`いや、${n}の言い分は筋通ってるんじゃねーの？`,`そこまで${n}を責めるの、早くね？`],
+      support:[`それな。オレも${n}の意見に近いわ。`,`まあ、${n}の話は分かるっつーことね。`,`そこは${n}に同意。`],
+      demand:[`役職あるやつ、そろそろ名乗ってもよくねーの？`,`隠すのは自由だけどさ、情報出さねーと始まんなくね？`,`占い師あたり、結果持ってんなら聞きたいんだけど。`],
+      chat:[`甘いもん食ってから考えたいんだけど。……ないの？`,`五人も喋るんだろ。長くね？`,`こういう時って、声でかいやつが白とは限んねーよな。`],
+      claim:[`オレは${p.claims.at(-1)||'市民'}。まあ、信じるかは任せるわ。`,`先に言っとく。オレは市民側だっつーことね。`,`隠しても面倒だし、言っとくわ。`],
+      share:[`昨日の結果、言っとく。${n}は${game.publicReports.at(-1)?.result==='wolf'?'人狼':'人狼じゃなかった'}。`,`これ黙ってても仕方ねーだろ。${n}の結果は出てる。`],
+      defendSelf:[`いやオレ？ 目立ってんのは認めるけど、そこ疑うの雑じゃね？`,`オレに票集めるの、理由薄くねーの？`,`疑うならちゃんと根拠出してくれっつーことね。`]
+    };return pick(lines[type]||lines.chat);
+  }
+  if(p.id==='tesuke'){
+    const lines={
+      suspect:[`ふふふ……${n}の言葉には、少し影が差しているようだ。`,`${n}、君の沈黙は雄弁だね。……ただの勘さ。`,`私は${n}が気になっている。理由？ ふふ、まだ秘密だろう。`],
+      defend:[`待ちたまえ。${n}を追い詰めるには、まだ材料が足りないだろう。`,`ふふふ……${n}の話には一理ある。`,`その人を庇うわけではないが、断定は早計だね。`],
+      support:[`興味深い。私も${n}の意見に賛成だ。`,`ふふふ……同じ景色を見ているようだね。`,`${n}の推理、私は嫌いではないよ。`],
+      demand:[`役職を持つ者は、そろそろ名乗り出てもよいのではないかな。`,`沈黙もまた一つの情報だが……今は言葉が欲しいね。`,`誰か、胸の内にある真実を聞かせてくれないか。`],
+      chat:[`人狼と掛けまして、夜食の菓子と解きます。その心は……どちらも食べられる側が困る。ふふふ。`,`このフードは深いだろう？ 何しろ底が見えない。`,`怖がらなくていい。噛みついたりはしないさ。歯があるかは秘密だがね。`],
+      claim:[`私の役職は${p.claims.at(-1)}だ。信じるかどうかは、君たち次第だろう。`,`ふふふ……隠し事は性に合わない。私は${p.claims.at(-1)}だよ。`,`役職を明かしておこう。私は${p.claims.at(-1)}だ。`],
+      share:[`占いの結果を伝えよう。${n}は${game.publicReports.at(-1)?.result==='wolf'?'人狼':'人狼ではなかった'}。ふふふ……`,`昨夜の結果だ。${n}について、一つ分かったことがある。`],
+      defendSelf:[`私を疑うのかい？ ふふふ……その勇気、称賛に値するね。`,`この姿は怪しいが、見た目で裁くのは感心しないだろう。`,`私が狼なら、もっと上手に隠れるさ。……たぶんね。`]
+    };return pick(lines[type]||lines.chat);
+  }
+  const base={
+    suspect:[`${n}さんの発言、少し引っかかっています。`,`私は${n}さんが気になります。理由はまだ整理中ですが。`,`今のところ、${n}さんを疑っています。`],
+    defend:[`${n}さんの意見も分かります。もう少し聞いてみませんか。`,`${n}さんを疑うには、まだ早いと思います。`,`その言い方は少し厳しすぎませんか。`],
+    support:[`私も${n}さんの考えに賛成です。`,`その見方はありそうですね。${n}さんに同意します。`,`確かに。${n}さんの話は筋が通っています。`],
+    demand:[`役職を持っている方は、名乗り出ていただけませんか。`,`情報が少ないですね。占い師の方はいませんか？`,`そろそろ役職の情報を共有してもよい頃だと思います。`],
+    chat:[`この広間、ずいぶん冷えますね。`,`皆さん、少し落ち着いて話しましょう。`,`まだ判断材料が少ないです。焦らずいきましょう。`],
+    claim:[`私は${p.claims.at(-1)}です。情報として共有しておきます。`,`隠しておく必要もないので、役職を明かします。`,`私の役職は${p.claims.at(-1)}です。よろしくお願いします。`],
+    share:[`占い結果を共有します。${n}さんは${game.publicReports.at(-1)?.result==='wolf'?'人狼でした':'人狼ではありませんでした'}。`,`昨夜の結果です。${n}さんについて確認できました。`],
+    defendSelf:[`私を疑う理由を聞かせてください。`,`疑われるのは心外ですが、説明はします。`,`私に投票する前に、発言を振り返ってほしいです。`]
+  };
+  const line=pick(base[type]||base.chat);const sp=SPECIES.find(s=>s.name===p.species);
+  return sp&&Math.random()<.18?line+' '+pick(sp.voice):line;
+}
+function emitAction(actor,action){
+  if(!actor||!actor.alive)return;
+  changeAlert(actor,rand(5,11));
+  const target=action.target;
+  let type=action.type;
+  if(type==='suspect'&&target){changeSuspicion(target,rand(8,15));target.mood=clamp(target.mood-rand(4,9),-100,100);affinity(actor,target,-rand(3,8));addLog('dialogue',actor.name,namedLine(actor,'suspect',target),'疑う');}
+  else if(type==='defend'&&target){changeSuspicion(target,-rand(5,10));target.mood=clamp(target.mood+rand(3,7),-100,100);affinity(actor,target,rand(5,10));changeSuspicion(actor,rand(0,3));addLog('dialogue',actor.name,namedLine(actor,'defend',target),'庇う');}
+  else if(type==='support'&&target){changeSuspicion(target,-rand(2,6));target.mood=clamp(target.mood+rand(2,6),-100,100);affinity(actor,target,rand(5,10));addLog('dialogue',actor.name,namedLine(actor,'support',target),'同調');}
+  else if(type==='demand'){addLog('dialogue',actor.name,namedLine(actor,'demand',null),'名乗り出ろ');}
+  else if(type==='chat'){addLog('dialogue',actor.name,namedLine(actor,'chat',null),'雑談');}
+  else if(type==='defendSelf'){changeSuspicion(actor,-rand(4,9));actor.mood=clamp(actor.mood+rand(2,5),-100,100);addLog('dialogue',actor.name,namedLine(actor,'defendSelf',null),'反論');}
+  else if(type==='claim'){
+    const claim=action.claim||ROLE.CITIZEN;actor.claims.push(claim);actor.publicClaim=claim;
+    const truthful=actor.role===claim;
+    if(!truthful){actor.isLying=true;changeSuspicion(actor,rand(2,6));}
+    addLog('dialogue',actor.name,namedLine(actor,'claim',null),'役職CO');
+    if(claim===ROLE.SEER){
+      if(truthful){const known=Object.entries(actor.seerKnowledge).find(([id])=>!actor.sharedKnowledge.includes(id));if(known)publishReading(actor,playerById(known[0]),known[1],false);}
+      else{const t=chooseTarget(actor,'talk');if(t){const result=Math.random()<.5?'wolf':'town';publishReading(actor,t,result,true);}}
+    }
+  }
+  else if(type==='share'&&target){const result=actor.seerKnowledge[target.id]||'town';publishReading(actor,target,result,false);}
+  renderRoster(actor.id);
+  if(type!=='chat'&&type!=='demand')processReactions(actor,action);
+  else if(Math.random()<.78)processReactions(actor,action);
+  renderRoster();
+}
+function publishReading(actor,target,result,isFake){
+  if(!target)return;
+  if(!isFake)actor.sharedKnowledge.push(target.id);
+  const record={from:actor.id,target:target.id,result,isFake};game.publicReports.push(record);
+  const resultLabel=result==='wolf'?'人狼':'人狼ではない';
+  const text=isFake?`昨夜、${target.name}さんを占いました。結果は「${resultLabel}」です。`:`占い結果を共有します。${target.name}さんは「${resultLabel}」でした。`;
+  addLog('dialogue',actor.name,text,'占い結果');
+  if(result==='wolf')changeSuspicion(target,36);else changeSuspicion(target,-12);
+  if(isFake){changeSuspicion(actor,rand(5,10));actor.isLying=true;}
+  actor.reports.push(record);
+  // 結果を聞いた参加者の反応を、能力値と感情で確率的に発生させる。
+  alive().filter(p=>p!==actor&&p!==target).forEach(p=>{
+    const trust=(p.stats.intuition+p.stats.logic)/200;
+    if(Math.random()<.16+trust*.18){if(result==='wolf')changeSuspicion(target,rand(2,6));else affinity(p,target,rand(1,4));}
+  });
+}
+function processReactions(actor,action){
+  const candidates=alive().filter(p=>p!==actor);
+  if(!candidates.length)return;
+  const count=Math.random()<.36?2:1;
+  shuffle(candidates).slice(0,count).forEach(listener=>{
+    if(!listener.alive)return;
+    const target=action.target;
+    const social=(actor.stats.charisma-50)/180;
+    const rapport=(listener.affinity[actor.id]||0)/160;
+    const acuity=(listener.stats.logic+listener.stats.intuition-100)/260;
+    let agreeChance=clamp(48+social*100+rapport*100+acuity*35,18,82)/100;
+    if(action.type==='claim')agreeChance=clamp(46+(actor.stats.acting-50)*.22-(listener.stats.intuition-50)*.16,18,82)/100;
+    if(action.type==='demand')agreeChance=.63;
+    const roll=Math.random();
+    if(target&&['suspect','defend','support'].includes(action.type)){
+      if(roll<agreeChance){
+        if(action.type==='suspect'){changeSuspicion(target,rand(4,9));target.mood=clamp(target.mood-rand(2,5),-100,100);affinity(listener,actor,rand(3,7));addLog('dialogue',listener.name,reactionLine(listener,'agree',actor,target),'便乗');}
+        else{changeSuspicion(target,-rand(2,6));affinity(listener,actor,rand(3,7));addLog('dialogue',listener.name,reactionLine(listener,'agreeDefend',actor,target),'同調');}
+      }else{
+        changeSuspicion(actor,rand(2,5));actor.mood=clamp(actor.mood-rand(2,5),-100,100);if(action.type==='suspect')changeSuspicion(target,-rand(1,4));affinity(listener,actor,-rand(2,5));addLog('dialogue',listener.name,reactionLine(listener,'disagree',actor,target),'否定');
+      }
+    }else if(action.type==='claim'){
+      if(roll<agreeChance){affinity(listener,actor,rand(2,5));addLog('dialogue',listener.name,reactionLine(listener,'agreeClaim',actor,null),'反応');}
+      else{changeSuspicion(actor,rand(3,7));addLog('dialogue',listener.name,reactionLine(listener,'disagreeClaim',actor,null),'追及');}
+    }else if(action.type==='share'&&target){
+      const result=actor.seerKnowledge[target.id]||'town';
+      const believes=roll<clamp(48+(actor.stats.acting-50)*.18+(listener.stats.intuition-50)*.16,18,84)/100;
+      if(listener.role===ROLE.WOLF&&target.role===ROLE.WOLF&&result==='wolf'){changeSuspicion(actor,rand(2,5));addLog('dialogue',listener.name,`その結果は信用できない。${target.name}さんが人狼だとは思えません。`,'反論');}
+      else if(result==='wolf'&&believes){changeSuspicion(target,rand(3,7));addLog('dialogue',listener.name,`${actor.name}さんの占い結果を支持します。${target.name}さんの発言を見直したいです。`,'占いに同調');}
+      else if(result==='town'&&believes){changeSuspicion(target,-rand(2,5));affinity(listener,target,rand(2,4));addLog('dialogue',listener.name,`${target.name}さんが白なら、ひとまず疑いを下げます。`,'占いを信頼');}
+      else{changeSuspicion(actor,rand(1,4));addLog('dialogue',listener.name,`結果は受け取ります。ただ、占い師本人の真偽はまだ判断できません。`,'慎重');}
+    }else if(action.type==='demand'){
+      if(roll<.25&&listener.claims.length===0){const claim=listener.role===ROLE.SEER?ROLE.SEER:listener.role===ROLE.GUARD?ROLE.GUARD:ROLE.CITIZEN;emitMiniClaim(listener,claim);}
+      else addLog('dialogue',listener.name,reactionLine(listener,'agreeClaim',actor,null),'反応');
+    }
+  });
+}
+function reactionLine(p,type,actor,target){
+  const a=actor.name,t=target?target.name:'その意見';
+  if(p.id==='miva'){
+    if(type==='agree')return [`まあ、${a}の言うことも分かるわ。`,`オレも${t}は気になってた。`,`そこは同じ意見だっつーことね。`][rand(0,2)];
+    if(type==='disagree')return [`いや、それは飛躍しすぎじゃね？`,`その決めつけは早いだろ。`,`根拠がまだ足りなくねーの？`][rand(0,2)];
+    if(type==='agreeDefend')return [`そうそう、今は様子見でよくね？`,`それな。まだ決めるには早いわ。`][rand(0,1)];
+    return [`へえ、そう来るんだ。`,`その役職、本当かねー？`,`まあ、覚えとくわ。`][rand(0,2)];
+  }
+  if(p.id==='tesuke'){
+    if(type==='agree')return [`ふふふ……私も${t}には違和感がある。`,`${a}と同じ結論だね。`,`なるほど、影が重なったようだ。`][rand(0,2)];
+    if(type==='disagree')return [`その推理は少々、急ぎすぎではないかな。`,`ふふ、私は別の景色を見ているよ。`,`断定するには、まだ暗闇が深いだろう。`][rand(0,2)];
+    if(type==='agreeDefend')return [`庇う理由もまた、聞く価値があるね。`,`ふふふ……公平であるべきだろう。`][rand(0,1)];
+    return [`その言葉、記憶しておこう。`,`ふふふ……信じるには、もう少し時間が欲しいね。`,`役職を名乗るとは大胆だ。`][rand(0,2)];
+  }
+  const lines={agree:[`${a}さんの意見に賛成です。`,`私も同じことを考えていました。`,`その指摘は自然だと思います。`],disagree:[`少し違う気がします。`,`その推理には賛成できません。`,`別の可能性も考えたいです。`],agreeDefend:[`確かに、まだ判断は早いですね。`,`もう少し話を聞いてみましょう。`],agreeClaim:[`分かりました。ひとまず覚えておきます。`,`情報共有ありがとうございます。`],disagreeClaim:[`その役職を名乗る根拠はありますか？`,`本当にその役職なのか、少し疑問です。`,`他に同じ役職の方はいませんか？`]};
+  const sp=SPECIES.find(s=>s.name===p.species);return pick(lines[type]||lines.agree)+(sp&&Math.random()<.15?' '+pick(sp.voice):'');
+}
+function emitMiniClaim(p,claim){p.claims.push(claim);p.publicClaim=claim;if(p.role!==claim){p.isLying=true;}addLog('dialogue',p.name,`${claim}です。聞かれたので、先に伝えておきます。`,'役職CO');changeAlert(p,rand(4,8));}
+function beginDay(){
+  if(checkVictory())return;
+  game.day++;game.turn=0;game.phase='朝';
+  addLog('system',`第 ${game.day} 日・朝`,`夜が明けた。生存者は広間へ集まり、五つの発言を交わす。`);
+  setPhase('朝パート',0,'発言 0 / 5');renderMetrics();schedule(dayTurn,1000);
+}
+function dayTurn(){
+  if(checkVictory())return;
+  if(game.turn>=5){schedule(beginVote,1000);return;}
+  const participants=alive();if(!participants.length){endGame('wolf');return;}
+  const actor=chooseSpeaker(participants);
+  const action=chooseAction(actor);
+  addLog('system',`朝の議論 · ${game.turn+1}ターン目`,`広間に声が響く。`,'');
+  emitAction(actor,action);
+  game.turn++;
+  setPhase('朝パート',game.turn,`発言 ${game.turn} / 5`);renderMetrics();
+  schedule(dayTurn,2100);
+}
+function chooseSpeaker(participants){
+  // 発言量が少ない者を少し優先しつつ、警戒心や状況によって偏りを生む。
+  const weights=participants.map(p=>Math.max(2,40-p.alert*.22+rand(0,28)+(p.suspicion>50?9:0)));
+  return weightedPick(participants,weights);
+}
+function beginVote(){
+  if(checkVictory())return;
+  game.phase='投票';setPhase('投票',5,'投票を集計中');addLog('system','月影の語り部','五つの発言が終わった。誰を追放するか、全員が投票する。');
+  const voters=alive();const votes=[];
+  voters.forEach(voter=>{const target=chooseVote(voter,voters.filter(p=>p!==voter));if(target){votes.push({voter,target});target.votePressure=(target.votePressure||0)+1;}});
+  votes.forEach((v,i)=>{const delayName=v.voter.name;addLog('vote',delayName,`「${v.target.name}」に投票した。`,'投票');});
+  const tally={};votes.forEach(v=>tally[v.target.id]=(tally[v.target.id]||0)+1);
+  const max=Math.max(...Object.values(tally));const top=voters.filter(p=>tally[p.id]===max);const exiled=pick(top);
+  const summary=Object.entries(tally).map(([id,n])=>`${playerById(id).name} ${n}票`).join(' / ');
+  addLog('system','投票結果',`投票内訳：${summary}`);
+  addLog('system','月影の語り部',`${exiled.name}が最多票を集めた。${exiled.name}は広間を去ることになった。`);
+  eliminate(exiled,'投票');
+  schedule(()=>{if(!checkVictory())beginNight();},1800);
+}
+function chooseVote(voter,candidates){
+  if(!candidates.length)return null;
+  const weights=candidates.map(target=>{
+    let score=16+target.suspicion*.72+target.alert*.12+(100-target.stats.cute)*.13+(100-(voter.affinity[target.id]||0))*.06+rand(0,28);
+    if(voter.role===ROLE.WOLF){
+      if(target.role===ROLE.WOLF)score=.01;
+      else score+=target.stats.charisma*.18+target.stats.logic*.17+target.stats.intuition*.08;
+      if(target.role===ROLE.MAD)score+=1;
+    }else if(voter.role===ROLE.MAD){
+      score+=target.stats.charisma*.08+rand(0,14);
+    }else{
+      const report=game.publicReports.find(r=>r.target===target.id&&r.result==='wolf'&&!r.isFake);
+      const clearReport=game.publicReports.find(r=>r.target===target.id&&r.result==='town'&&!r.isFake);
+      const fakeReport=game.publicReports.find(r=>r.target===target.id&&r.result==='wolf'&&r.isFake);
+      if(report)score+=95;
+      if(clearReport)score-=22;
+      if(fakeReport)score+=18;
+      if(voter.role===ROLE.SEER&&voter.seerKnowledge[target.id]==='wolf')score+=120;
+      if(voter.role===ROLE.SEER&&voter.seerKnowledge[target.id]==='town')score-=50;
+      if(target.isLying){const detectChance=clamp(12+voter.stats.intuition*.48+voter.stats.logic*.22-target.stats.acting*.28,5,88);if(Math.random()*100<detectChance)score+=12+voter.stats.intuition*.06;}
+      if(target.publicClaim===ROLE.SEER&&target.role!==ROLE.SEER&&Math.random()*100<voter.stats.intuition*.42+voter.stats.logic*.16)score+=15;
+      if(target.publicClaim===ROLE.CITIZEN&&target.role===ROLE.WOLF)score+=3;
+    }
+    if(target.role===ROLE.WOLF&&voter.role!==ROLE.WOLF&&voter.role!==ROLE.MAD)score+=voter.stats.intuition*.08;
+    return Math.max(.1,score);
+  });
+  return weightedPick(candidates,weights);
+}
+function eliminate(p,reason){
+  if(!p||!p.alive)return;
+  p.alive=false;p.revealed=true;p.eliminatedBy=reason;game.dead.push(p);
+  addLog('system','役職公開',`${p.name}の正体は「${p.role}」だった。`,p.role);
+  addHeaven(p);
+  renderRoster();renderMetrics();
+}
+function addHeaven(p){
+  const root=$('heavenContent');const empty=root.querySelector('.heaven-empty');if(empty)empty.remove();
+  const old=game.heaven.length;game.heaven.push(p.id);$('heavenCount').textContent=`${game.heaven.length} SOUL${game.heaven.length===1?'':'S'}`;
+  let line='';
+  if(p.id==='miva')line=pick(['いやー、まさかオレが先に落ちるとはね。まあ、座って見てるわ。','投票理由、あとで聞かせてほしいんだけど。甘いもん食べながら。','あーあ。まあ、ここからが面白いんじゃねーの？']);
+  else if(p.id==='tesuke')line=pick(['ふふふ……天国部屋へようこそ。こちらはずいぶん見晴らしがいいね。','私がいなくなって寂しいだろう？ ……冗談さ。ふふふ。','なるほど、そういう結末か。実に興味深いね。']);
+  else line=pick(['まさか自分が選ばれるとは思いませんでした……。','皆さん、私のことを疑いすぎですよ。','ここからは静かに見守ることにします。']);
+  appendHeavenLine(p.name,line);
+  if(old>0){const other=playerById(game.heaven[game.heaven.length-2]);const reply=other.id==='miva'?'いや、でも今の投票はちょっと雑じゃねーの？':other.id==='tesuke'?'ふふふ……地上では見えないものも見えるね。':'地上の皆さん、もう少し落ち着いてほしいですね。';appendHeavenLine(other.name,reply);}
+}
+function appendHeavenLine(name,text){const root=$('heavenContent');const p=document.createElement('p');p.className='heaven-line';const b=document.createElement('b');b.textContent=name+'：';p.append(b,document.createTextNode(text));root.appendChild(p);root.scrollTop=root.scrollHeight;}
+function beginNight(){
+  if(checkVictory())return;
+  game.phase='夜';game.nightTarget=null;game.guardTarget=null;
+  addLog('system','月影の語り部',`広間の灯りが消える。第 ${game.day} 夜、残された者たちはそれぞれの思惑を胸に、静かに目を閉じた。`);
+  setPhase('夜パート',0,'夜の行動');schedule(seerNight,1200);
+}
+function seerNight(){
+  const seer=livingByRole(ROLE.SEER)[0];
+  if(seer){const target=chooseTarget(seer,'seer');if(target){const result=target.role===ROLE.WOLF?'wolf':'town';seer.seerKnowledge[target.id]=result;addLog('night','夜の気配','誰かが水晶に手をかざした。淡い光が、一人の影を静かに照らす。','占い');}}
+  else addLog('night','夜の気配','水晶は沈黙したまま、月明かりだけを映している。');
+  schedule(wolfNight,1300);
+}
+function wolfNight(){
+  const wolves=livingByRole(ROLE.WOLF);const targets=alive().filter(p=>p.role!==ROLE.WOLF);
+  if(wolves.length&&targets.length){
+    const weights=targets.map(p=>Math.max(1,10+p.stats.charisma*.18+p.stats.logic*.15+p.stats.intuition*.1+(100-p.stats.stealth)*.24+rand(0,20)));
+    game.nightTarget=weightedPick(targets,weights);
+    addLog('night','夜の気配','闇の中で、複数の影がひそやかに動いた。やがて標的が一人に定まる。','襲撃');
+  }else{game.nightTarget=null;addLog('night','夜の気配','闇は静まり返っている。');}
+  schedule(guardNight,1300);
+}
+function guardNight(){
+  const guard=livingByRole(ROLE.GUARD)[0];
+  if(guard){
+    const targets=alive();const pool=targets.filter(p=>p.id!==game.lastGuardTarget);
+    const choices=pool.length?pool:targets;
+    const weights=choices.map(p=>Math.max(1,18+p.stats.charisma*.09+p.stats.stealth*.08+(p.suspicion>45?8:0)+rand(0,26)));
+    game.guardTarget=weightedPick(choices,weights);
+    guard.lastProtected=game.guardTarget.id;game.lastGuardTarget=game.guardTarget.id;
+    addLog('night','夜の気配','誰かが静かに祈りを捧げた。薄い光が、ひとつの場所を包み込む。','護衛');
+  }else{game.guardTarget=null;addLog('night','夜の気配','守り手はもういない。');}
+  schedule(resolveNight,1500);
+}
+function resolveNight(){
+  const target=game.nightTarget;
+  if(target&&target.alive&&game.guardTarget&&game.guardTarget.id===target.id){
+    addLog('system','夜明け','襲撃は防がれた。誰も命を落とさず、朝を迎える。');
+  }else if(target&&target.alive){
+    addLog('system','夜明け',`${target.name}が昨夜の襲撃によって倒れていた。`);
+    eliminate(target,'襲撃');
+  }else addLog('system','夜明け','昨夜、倒れた者はいなかった。');
+  renderMetrics();
+  schedule(()=>{if(!checkVictory())beginDay();},1600);
+}
+function checkVictory(){
+  const living=alive();const wolves=living.filter(p=>p.role===ROLE.WOLF).length;const others=living.length-wolves;
+  if(wolves===0){endGame('town');return true;}
+  if(wolves>=others){endGame('wolf');return true;}
+  return false;
+}
+function endGame(winner){
+  if(game.winner)return;
+  game.winner=winner;game.phase='終幕';
+  const title=winner==='town'?'市民陣営の勝利':'人狼陣営の勝利';
+  const desc=winner==='town'?'すべての人狼が追放された。広間に、長い夜の終わりを告げる鐘が鳴り響く。':'人狼の数が、それ以外の生存者と同数以上になった。広間は人狼たちの支配下に置かれた。';
+  addLog('system','ゲーム終了',desc,'RESULT');
+  const roles=game.players.map(p=>`${p.name}：${p.role}`).join('　／　');
+  addLog('system','最終配役',roles,'FULL REVEAL');
+  $('resultStrip').className='result-strip show'+(winner==='wolf'?' wolf':'');
+  $('resultTitle').textContent=title;$('resultText').textContent=desc;
+  game.players.forEach(p=>p.revealed=true);renderRoster();renderMetrics();setPhase('ゲーム終了',5,'結果発表');
+  if(loopOn){addLog('system','月影の語り部','しばしの休息のあと、別の配役で新しい卓が開かれる……。');schedule(startMatch,9000);}
+  else{addLog('system','月影の語り部','連続観戦は停止中です。「新しい卓を開く」から次のゲームを開始できます。');}
+}
+$('startBtn').addEventListener('click',startMatch);
+$('restartBtn').addEventListener('click',startMatch);
+$('pauseBtn').addEventListener('click',togglePause);
+$('loopBtn').addEventListener('click',()=>{loopOn=!loopOn;$('loopBtn').textContent=`↻ 連続観戦 ${loopOn?'ON':'OFF'}`;$('loopBtn').classList.toggle('active',loopOn);if(game?.winner&&loopOn)schedule(startMatch,2500);else if(game?.winner&&!loopOn&&nextAction===startMatch){if(timer)clearTimeout(timer);timer=null;nextAction=null;}});
+document.querySelectorAll('.speed').forEach(b=>b.addEventListener('click',()=>setSpeed(Number(b.dataset.speed))));
+</script>
+</body>
+</html>
